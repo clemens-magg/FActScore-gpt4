@@ -30,6 +30,12 @@ pip install -r requirements.txt
 
 Make a new Python 3.7+ environment using `virtualenv` or `conda`.
 
+For using atomic facts only:
+```bash
+cd factscore
+pip install .
+```
+
 ```bash
 pip install --upgrade factscore
 python -m spacy download en_core_web_sm
