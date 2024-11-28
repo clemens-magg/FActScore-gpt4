@@ -38,7 +38,8 @@ class AtomicFactGenerator(object):
     def run(self, generation, cost_estimate=None):
         """Convert the generation into a set of atomic facts. Return a total words cost if cost_estimate != None."""
         assert isinstance(generation, str), "generation must be a string"
-        paragraphs = [para.strip() for para in generation.split("\n") if len(para.strip()) > 0]
+        #paragraphs = [para.strip() for para in generation.split("\n") if len(para.strip()) > 0]
+        paragraphs = sent_tokenize(generation)
         return self.get_atomic_facts_from_paragraph(paragraphs, cost_estimate=cost_estimate)
 
     def get_atomic_facts_from_paragraph(self, paragraphs, cost_estimate=None):
