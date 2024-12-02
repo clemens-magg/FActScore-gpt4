@@ -1,10 +1,12 @@
 from factscore.lm import LM
-from openai import OpenAI
+from openai
 import sys
 import time
 import os
 import numpy as np
 import logging
+
+from transformers import AutoModelForCausalLM, AutoTokenizer, pipeline
 
 class OpenAIModel(LM):
 
@@ -14,6 +16,10 @@ class OpenAIModel(LM):
         self.key_path = key_path
         self.temp = 0.7
         self.save_interval = 100
+
+        self.llama_model = None
+        self.llama_tokenizer = None
+        self.llama_pipeline = None
         super().__init__(cache_file)
 
     def load_model(self):
@@ -36,6 +42,10 @@ class OpenAIModel(LM):
             response = self.call_GPT4(prompt, temp=self.temp)
             output = response.content
             return output, response
+        elif self.model_name == "meta-llama-Llama-3.1-8B-Instruct":
+            response = self.call_llama(prompt, temp=self.temp)
+            output = response["choices"][0]["text"]
+            return output, response
         else:
             raise NotImplementedError()
 
@@ -52,3 +62,29 @@ class OpenAIModel(LM):
             ]
         )
         return completion.choices[0].message
+    
+    
+    def call_llama(self, prompt, model_name="meta-llama-Llama-3.1-8B-Instruct", temp=0.7):
+        read_token = os.getenv("HF_TOKEN")
+        self.load_llama(model_name, read_token, temp)
+
+        response = self.llama_pipeline(prompt)[0]["generated_text"]
+
+        return response
+    
+
+    def load_llama(self, model_name, token, temp=0.7, max_len=512):
+        if self.llama_model is None or self.llama_tokenizer is None or self.llama_pipeline is None:
+            self.llama_model = AutoModelForCausalLM.from_pretrained(model_name, token=token)
+            self.llama_tokenizer = AutoTokenizer.from_pretrained(model_name, token=token)
+            self.llama_pipeline = pipeline(
+                "text-generation",
+                model=self.llama_model,
+                tokenizer=self.llama_tokenizer,
+                max_new_tokens=max_len,
+                framework="pt",
+                batch_size=1,
+                return_text=True,
+                temperature=temp,
+                top_p=0.9,
+            )
