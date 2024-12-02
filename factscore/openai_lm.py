@@ -1,5 +1,5 @@
 from factscore.lm import LM
-from openai
+import openai
 import sys
 import time
 import os
