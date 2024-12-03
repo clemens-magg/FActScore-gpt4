@@ -8,6 +8,8 @@ import logging
 
 from transformers import AutoModelForCausalLM, AutoTokenizer, pipeline
 
+from openai import OpenAI
+
 class OpenAIModel(LM):
 
     def __init__(self, model_name, cache_file=None, key_path="api.key"):
@@ -39,12 +41,16 @@ class OpenAIModel(LM):
         # return a tuple of string (generated text) and metadata (any format)
         # This should be about generating a response from the prompt, no matter what the application is
         if self.model_name == "gpt-4o-mini":
-            response = self.call_GPT4(prompt, temp=self.temp)
+            print(f"This is the prompt gpt4: {prompt}")
+            response = self.call_gpt4(prompt)
             output = response.content
+            print(f"RESPONSE.content: {output}")
             return output, response
-        elif self.model_name == "meta-llama-Llama-3.1-8B-Instruct":
+        elif self.model_name == "meta-llama/Llama-3.1-8B-Instruct":
+            print(f"This is the prompt: {prompt}")
             response = self.call_llama(prompt, temp=self.temp)
-            output = response["choices"][0]["text"]
+            output = response #["choices"][0]["text"]
+            print(f"OUTPUT: {output}")
             return output, response
         else:
             raise NotImplementedError()
@@ -64,13 +70,15 @@ class OpenAIModel(LM):
         return completion.choices[0].message
     
     
-    def call_llama(self, prompt, model_name="meta-llama-Llama-3.1-8B-Instruct", temp=0.7):
+    def call_llama(self, prompt, model_name="meta-llama/Llama-3.1-8B-Instruct", temp=0.7):
         read_token = os.getenv("HF_TOKEN")
         self.load_llama(model_name, read_token, temp)
 
-        response = self.llama_pipeline(prompt)[0]["generated_text"]
+        response = self.llama_pipeline(prompt)
 
-        return response
+        print(f"THIS is the model output: {response[0]}")
+
+        return response[0]["generated_text"][len(prompt):]
     
 
     def load_llama(self, model_name, token, temp=0.7, max_len=512):
@@ -83,6 +91,7 @@ class OpenAIModel(LM):
                 tokenizer=self.llama_tokenizer,
                 max_new_tokens=max_len,
                 framework="pt",
+                device=0,
                 batch_size=1,
                 return_text=True,
                 temperature=temp,
