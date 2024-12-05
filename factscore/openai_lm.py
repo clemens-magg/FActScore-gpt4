@@ -41,16 +41,16 @@ class OpenAIModel(LM):
         # return a tuple of string (generated text) and metadata (any format)
         # This should be about generating a response from the prompt, no matter what the application is
         if self.model_name == "gpt-4o-mini":
-            print(f"This is the prompt gpt4: {prompt}")
+            #print(f"This is the prompt gpt4: {prompt}")
             response = self.call_gpt4(prompt)
             output = response.content
-            print(f"RESPONSE.content: {output}")
+            #print(f"RESPONSE.content: {output}")
             return output, response
         elif self.model_name == "meta-llama/Llama-3.1-8B-Instruct":
-            print(f"This is the prompt: {prompt}")
+            #print(f"This is the prompt: {prompt}")
             response = self.call_llama(prompt, temp=self.temp)
             output = response #["choices"][0]["text"]
-            print(f"OUTPUT: {output}")
+            #print(f"OUTPUT: {output}")
             return output, response
         else:
             raise NotImplementedError()
@@ -76,7 +76,7 @@ class OpenAIModel(LM):
 
         response = self.llama_pipeline(prompt)
 
-        print(f"THIS is the model output: {response[0]}")
+        #print(f"THIS is the model output: {response[0]}")
 
         return response[0]["generated_text"][len(prompt):]
     

@@ -62,7 +62,7 @@ class AtomicFactGenerator(object):
 
             sentences += curr_sentences
 
-        atoms_or_estimate = self.get_init_atomic_facts_from_sentence([sent for i, sent in enumerate(sentences) if not (not self.is_bio and ( \
+        atoms_or_estimate, output_len = self.get_init_atomic_facts_from_sentence([sent for i, sent in enumerate(sentences) if not (not self.is_bio and ( \
                             (i==0 and (sent.startswith("Sure") or sent.startswith("Here are"))) or \
                             (i==len(sentences)-1 and (sent.startswith("Please") or sent.startswith("I hope") or sent.startswith("Here are")))))], cost_estimate=cost_estimate)
 
@@ -91,7 +91,7 @@ class AtomicFactGenerator(object):
         if self.is_bio:
             atomic_facts_pairs, para_breaks = postprocess_atomic_facts(atomic_facts_pairs, list(para_breaks), self.nlp)
 
-        return atomic_facts_pairs, para_breaks
+        return atomic_facts_pairs, para_breaks, output_len
 
 
     def get_init_atomic_facts_from_sentence(self, sentences, cost_estimate=None):
@@ -103,6 +103,7 @@ class AtomicFactGenerator(object):
         k = 1 if is_bio else 0
         n = 7 if is_bio else 8
 
+        output_len = 0
         prompts = []
         prompt_to_sent = {}
         atoms = {}
@@ -133,17 +134,18 @@ class AtomicFactGenerator(object):
                 if cost_estimate == "consider_cache" and (prompt.strip() + "_0") in self.openai_lm.cache_dict:
                     continue
                 total_words_estimate += len(prompt.split())
-            return total_words_estimate
+            return total_words_estimate, 0
         else:
             for prompt in prompts:
                 output, _ = self.openai_lm.generate(prompt)
                 atoms[prompt_to_sent[prompt]] = text_to_sentences(output)
+                output_len += len(output)
 
             for key, value in demons.items():
                 if key not in atoms:
                     atoms[key] = value
 
-            return atoms
+            return atoms, output_len
 
 
 def best_demos(query, bm25, demons_sents, k):
