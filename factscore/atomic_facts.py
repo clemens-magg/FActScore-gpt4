@@ -20,8 +20,10 @@ nltk.download("punkt")
 class AtomicFactGenerator(object):
     def __init__(self, key_path, demon_dir, model_name, gpt3_cache_file=None):
         self.nlp = spacy.load("en_core_web_sm")
-        self.is_bio = True
-        self.demon_path = os.path.join(demon_dir, "demons.json" if self.is_bio else "demons_complex.json")
+        
+        self.is_bio = False
+        is_abstract = True
+        self.demon_path = os.path.join(demon_dir, "demons.json" if self.is_bio else "demons_abstract.json" if is_abstract else "demons_complex.json")
 
         self.openai_lm = OpenAIModel(model_name, cache_file=gpt3_cache_file, key_path=key_path)
 
